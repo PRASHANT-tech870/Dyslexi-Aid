@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech with Highlighting</title>
+    <style>
+        body {
+            background-color: rgb(14,17,23); /* Dark background color */
+            color: #e0e0e0; /* Light text color */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #text-container {
+            margin-bottom: 20px;
+        }
+        #text-output {
+            font-size: 1.2em;
+            line-height: 1.5;
+            max-width: 90%;
+            margin-bottom: 20px;
+            text-align: center;
+            white-space: pre-wrap; /* Preserve whitespace */
+        }
+        textarea {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: rgb(14,17,23);
+            color: #e0e0e0;
+            font-size: 1em;
+            resize: none;
+        }
+        textarea:focus {
+            outline: 2px solid #6ab04c; /* Green outline on focus */
+        }
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #6ab04c; /* Green background */
+            color: #fff; /* White text color */
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4a9a3a; /* Darker green on hover */
+        }
+        .highlight {
+            background-color: #a0e3a3; /* Light green highlighting */
+            color: rgb(14,17,23); /* Text color for highlighted sentences */
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="text-container">
+        <p id="text-output">{text_variable}</p> <!-- Display text initially -->
+    </div>
+    <textarea id="text-input" rows="5" cols="50" placeholder="Enter text here..."></textarea><br>
+    <button onclick="readText()">Read Text</button>
+
+    <script>
+        // Get the text from the Python variable
+        const initialText = `{text_variable}`;
+
+        // Set the textarea value to the text from Python
+        document.getElementById("text-input").value = initialText;
+
+        function readText() {
+            let text = document.getElementById("text-input").value.trim();
+            if (!text) return; // Exit if the textarea is empty
+
+            let sentences = text.split(/(?<=[.!?])\s+/); // Split text into sentences
+            let outputElement = document.getElementById("text-output");
+            let originalText = outputElement.innerHTML;
+
+            // Function to highlight and speak each sentence
+            function highlightAndSpeak(index) {
+                if (index >= sentences.length) return;
+
+                // Update HTML with the highlighted sentence
+                let highlightedText = sentences.map((sentence, i) => i === index ? `<span class="highlight">${sentence}</span>` : `<span>${sentence}</span>`).join(" ");
+                outputElement.innerHTML = highlightedText;
+
+                // Create and play audio
+                let utterance = new SpeechSynthesisUtterance(sentences[index]);
+                utterance.rate = 1; // Increase the speech rate (default is 1)
+                speechSynthesis.speak(utterance);
+
+                utterance.onend = function() {
+                    outputElement.innerHTML = originalText; // Reset to original text after speaking
+                    highlightAndSpeak(index + 1); // Recursively highlight next sentence
+                };
+            }
+
+            highlightAndSpeak(0); // Start highlighting and speaking from the first sentence
+        }
+    </script>
+</body>
+</html>
